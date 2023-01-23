@@ -1,0 +1,14 @@
+# depslib dependency file v1.0
+1674472532 source:c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\main.c
+
+1674473602 source:c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\metode.c
+	"metode.h"
+
+1674473327 c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\metode.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	"strukture.h"
+
+1674473695 c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\strukture.h
+
