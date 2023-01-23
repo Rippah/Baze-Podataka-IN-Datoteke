@@ -19,7 +19,7 @@ void kreirajRasutuDatoteku(char *naziv) {
         BAKET baket;
         fseek(fajl, 0, SEEK_SET);
         int i, j;
-        for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
+        for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {       //Postavimo sve pocetne vrednosti na neki standard za prazne karaktere ("-")
             baket.slogovi[j].duzinaKazne = 0;
             baket.slogovi[j].deleted = 0;
             strcpy(baket.slogovi[j].evidBroj, "-");
@@ -61,10 +61,10 @@ void ispisRasute(FILE *fajl) {
 
     printf("\n\nB S\tEvidBr  SifraZat  DatDol  OznCel  DuzKazne  STATUS\n");
     int i;
-    for(i = 0; i < BAK; i++) {
+    for(i = 0; i < BAK; i++) {              //Svaki baket po redu otvaramo
         fread(&baketi[i], sizeof(BAKET), 1, fajl);
         int j;
-        for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
+        for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {   //Sve dok traje faktor baketiranja ispisujemo vrednost tog baketa
             printf("%d %d\t%s\t %s\t %s\t %s\t %d\t %d\t\n", i, j,
                    baketi[i].slogovi[j].evidBroj,
                    baketi[i].slogovi[j].sifraZatvorenika,
@@ -124,9 +124,9 @@ int nadjiSlobodanBaket(int adresaPunog, FILE *fajlRasuta) {
         fread(&baketi[i], sizeof(BAKET), 1, fajlRasuta);
     }
 
-    adresaSledeceg = (adresaPunog + KORAK)%BAK;
+    adresaSledeceg = (adresaPunog + KORAK)%BAK; //Trazimo da li postoji slobodan slot
 
-    if(baketi[adresaSledeceg].slogovi[FAKTOR_BAKETIRANJA-1].deleted != 0)
+    if(baketi[adresaSledeceg].slogovi[FAKTOR_BAKETIRANJA-1].deleted != 0)   //Ako u tom slotu se nalaze podaci, moramo da trazimo dalje
         adresaSledeceg = nadjiSlobodanBaket(adresaSledeceg, fajlRasuta);
 
     return adresaSledeceg;
@@ -145,6 +145,7 @@ void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
     for(i = 0; i < BAK; i++) {
         fread(&baketi[i], sizeof(BAKET), 1, fajlRasuta);
     }
+
         BLOK_SS blok;
         fseek(fajlSS, 0, SEEK_SET);
 
@@ -153,28 +154,27 @@ void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
                 if(strcmp(blok.slogovi[i].evidBroj, OZNAKA_KRAJA_DATOTEKE) == 0)
                     return;
 
-
                 int id = atoi(blok.slogovi[i].evidBroj);
-                int adresa = id%BAK;
+                int adresa = id%BAK;    //Trazimo adresu gde treba da upisujemo evidencioni broj u rasutu datoteku
                 int j;
 
                 for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
-                    if(baketi[adresa].slogovi[FAKTOR_BAKETIRANJA-1].deleted != 0)
+                    if(baketi[adresa].slogovi[FAKTOR_BAKETIRANJA-1].deleted != 0)   //U slucaju da nadjemo mesto za tog zatvorenika a to mesto je zauzeto (znaci da je ovaj podatak PREKORACILAC) koristimo funkciju nadjiSlobodanBlok koja trazi da li postoji jos slobodnih mesta
                         adresa = nadjiSlobodanBaket(adresa, fajlRasuta);
 
-                    if(baketi[adresa].slogovi[j].deleted == 0) {
-                        baketi[adresa].slogovi[j].deleted = 1;
+                    if(baketi[adresa].slogovi[j].deleted == 0) {            //U slucaju da nadjemo mesto za tog zatvorenika i to mesto je slobodno (ILI JE PREKORACILAC NASAO SEBI MESTO) ubacujemo zatvorenika
+                        baketi[adresa].slogovi[j].deleted = 1;              //Deleted prelazi iz stanja EMPTY u stanje ACTIVE
                         baketi[adresa].slogovi[j].duzinaKazne = blok.slogovi[i].duzinaKazne;
                         strcpy(baketi[adresa].slogovi[j].evidBroj, blok.slogovi[i].evidBroj);
                         strcpy(baketi[adresa].slogovi[j].sifraZatvorenika, blok.slogovi[i].sifraZatvorenika);
                         sprintf(baketi[adresa].slogovi[j].datumDolaska, "%d-%d-%d %d:%d", blok.slogovi[i].datumVremeDolaska.dan, blok.slogovi[i].datumVremeDolaska.mesec, blok.slogovi[i].datumVremeDolaska.godina, blok.slogovi[i].datumVremeDolaska.sati, blok.slogovi[i].datumVremeDolaska.minuti);
                         //strcpy(baketi[adresa].slogovi[j].datumDolaska, "-");
                         strcpy(baketi[adresa].slogovi[j].oznakaCelije, blok.slogovi[i].oznakaCelije);
-                        break;
+                        break;      //Upisali smo vrednost tog clana, nema potrebe da prolazimo kroz celu RASUTU datoteku (moze cak doci i do gresaka!!!)
                     }
                 }
 
-                fseek(fajlRasuta, adresa*sizeof(BAKET), SEEK_SET);
+                fseek(fajlRasuta, adresa*sizeof(BAKET), SEEK_SET);      //adresa*baket = baket u kome se nalazi podatak koji smo upisali
                 fwrite(&baketi[adresa], sizeof(BAKET), 1, fajlRasuta);
         }
 
