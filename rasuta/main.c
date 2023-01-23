@@ -21,6 +21,7 @@ int main() {
         printf("\t4 -> Ispisi Rasutu Datoteku\n");
         printf("\t5 -> Ispisi Serijsku/Sekvencijalnu Datoteku\n");
         printf("\t6 -> Konverzija iz Serijske u Rasutu\n");
+        printf("\t7 -> Dodaj novi slog u rasutu datoteku\n");
         printf("\t0 -> Izlaz\n\n");
         if(fajlRasuta == NULL)
             printf("RASUTA DATOTEKA NIJE OTVORENA\n");
@@ -70,6 +71,22 @@ int main() {
             }
             case 6: {
                 konverzija(fajlSS, fajlRasuta);
+                break;
+            }
+            case 7: {
+                SLOG slog;
+                printf("\nEvidencioni Broj:\t");
+                scanf("%s", &slog.evidBroj);
+                printf("\nDuzina Kazne:\t");
+                scanf("%d", &slog.duzinaKazne);
+                printf("\nDatum Dolaska:\t");
+                scanf("%s", slog.datumDolaska);
+                printf("\nOznaka Celije:\t");
+                scanf("%s", slog.oznakaCelije);
+                printf("\nSifra Zatvorenika\t");
+                scanf("%s", slog.sifraZatvorenika);
+                slog.deleted = 1;
+                unesiRasutiSlog(fajlRasuta, &slog);
                 break;
             }
             case 0: {

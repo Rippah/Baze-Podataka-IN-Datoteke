@@ -10,3 +10,4 @@ void kreirajSSDatoteku(char *naziv);
 void ispisRasute(FILE *fajl);
 void ispisSS(FILE *fajl);
 void konverzija(FILE *fajlSS, FILE *fajlRasuta);
+void unesiRasutiSlog(FILE *fajl, SLOG *slog);

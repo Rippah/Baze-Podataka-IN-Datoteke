@@ -183,4 +183,21 @@ void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
 }
 
 
+void unesiRasutiSlog(FILE *fajl, SLOG *slog) {
+    int indeks = nadjiSlobodanBaket(atoi(slog->evidBroj)%BAK, fajl);
+
+    BAKET baketi[BAK];
+    fseek(fajl, indeks*sizeof(BAKET), SEEK_SET);
+    int j;
+    for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
+        if(baketi[indeks].slogovi[j].deleted != 0) {
+            memcpy(&baketi[indeks].slogovi[j], slog, sizeof(SLOG));
+            break;
+        }
+    }
+    fseek(fajl, -sizeof(SLOG), SEEK_CUR);
+    fwrite(&baketi[indeks].slogovi[j], sizeof(SLOG), 1, fajl);
+}
+
+
 
