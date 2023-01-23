@@ -17,8 +17,10 @@ int main() {
         printf("Odaberite opciju:\n\n");
         printf("\t1 -> Otvaranje Datoteke\n");
         printf("\t2 -> Kreiraj Rasutu Datoteku\n");
-        printf("\t3 -> Ispisi Rasutu Datoteku\n");
-        printf("\t4 -> Konverzija iz Serijske u Rasutu\n");
+        printf("\t3 -> Kreiraj Sekvencijalnu/Serijsku Datoteku\n");
+        printf("\t4 -> Ispisi Rasutu Datoteku\n");
+        printf("\t5 -> Ispisi Serijsku/Sekvencijalnu Datoteku\n");
+        printf("\t6 -> Konverzija iz Serijske u Rasutu\n");
         printf("\t0 -> Izlaz\n\n");
         if(fajlRasuta == NULL)
             printf("RASUTA DATOTEKA NIJE OTVORENA\n");
@@ -29,18 +31,45 @@ int main() {
         switch(unosKorisnik) {
             case 1: {
 
+                if(fajlRasuta != NULL)
+                    fclose(fajlRasuta);
+                if(fajlSS != NULL)
+                    fclose(fajlSS);
+
+                char nazivRasuta[20];
+                printf("\nUnesite naziv rasute datoteke za otvaranje:\t");
+                scanf("%s", nazivRasuta);
+                fajlRasuta = otvoriDatoteku(nazivRasuta);
+                char nazivSS[20];
+                printf("\nUnesite naziv sekvencijalne/serijske datoteke za otvaranje:\t");
+                scanf("%s", nazivSS);
+                fajlSS = otvoriDatoteku(nazivSS);
                 break;
             }
             case 2: {
-
+                char naziv[20];
+                printf("Unesite ime rasute datoteke za kreiranje:\t");
+                scanf("%s", naziv);
+                kreirajRasutuDatoteku(naziv);
                 break;
             }
             case 3: {
-
+                char naziv[20];
+                printf("Unesite ime sekvencijalne/serijske datoteke za kreiranje:\t");
+                scanf("%s", naziv);
+                kreirajSSDatoteku(naziv);
                 break;
             }
             case 4: {
-
+                ispisRasute(fajlRasuta);
+                break;
+            }
+            case 5: {
+                ispisSS(fajlSS);
+                break;
+            }
+            case 6: {
+                konverzija(fajlSS, fajlRasuta);
                 break;
             }
             case 0: {

@@ -1,10 +1,11 @@
 # depslib dependency file v1.0
-1674472532 source:c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\main.c
-
-1674473602 source:c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\metode.c
+1674478543 source:c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\main.c
 	"metode.h"
 
-1674473327 c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\metode.h
+1674478919 source:c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\metode.c
+	"metode.h"
+
+1674476498 c:\users\dzoni\onedrive\dokumenti\github\-bp1-in--datoteke\rasuta\metode.h
 	<stdio.h>
 	<stdlib.h>
 	<string.h>
