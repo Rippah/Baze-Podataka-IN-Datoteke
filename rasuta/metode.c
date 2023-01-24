@@ -13,8 +13,10 @@ FILE *otvoriDatoteku(char *naziv) {
 
 void kreirajRasutuDatoteku(char *naziv) {
     FILE *fajl = fopen(naziv, "wb");
-    if(fajl == NULL)
+    if(fajl == NULL) {
         printf("\n\nFAJL NIJE USPESNO POSLAT\n\n");
+        return;
+    }
     else {
         BAKET baket;
         fseek(fajl, 0, SEEK_SET);
@@ -159,7 +161,7 @@ void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
                 int j;
 
                 for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
-                    if(baketi[adresa].slogovi[FAKTOR_BAKETIRANJA-1].deleted != 0)   //U slucaju da nadjemo mesto za tog zatvorenika a to mesto je zauzeto (znaci da je ovaj podatak PREKORACILAC) koristimo funkciju nadjiSlobodanBlok koja trazi da li postoji jos slobodnih mesta
+                    if(baketi[adresa].slogovi[FAKTOR_BAKETIRANJA-1].deleted != 0)   //U slucaju da nadjemo mesto za tog zatvorenika u jednom baketu a svako mesto je zauzeto (znaci da je ovaj podatak PREKORACILAC) koristimo funkciju nadjiSlobodanBlok koja trazi da li postoji jos slobodnih mesta
                         adresa = nadjiSlobodanBaket(adresa, fajlRasuta);
 
                     if(baketi[adresa].slogovi[j].deleted == 0) {            //U slucaju da nadjemo mesto za tog zatvorenika i to mesto je slobodno (ILI JE PREKORACILAC NASAO SEBI MESTO) ubacujemo zatvorenika
@@ -184,6 +186,9 @@ void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
 
 
 void unesiRasutiSlog(FILE *fajl, SLOG *slog) {
+    if(fajl == NULL)
+        return;
+
     int indeks = nadjiSlobodanBaket(atoi(slog->evidBroj)%BAK, fajl);
 
     BAKET baketi[BAK];
@@ -198,6 +203,209 @@ void unesiRasutiSlog(FILE *fajl, SLOG *slog) {
     fseek(fajl, -sizeof(SLOG), SEEK_CUR);
     fwrite(&baketi[indeks].slogovi[j], sizeof(SLOG), 1, fajl);
 }
+
+SLOG *pronadjiSlog(FILE *fajl, char *evidBroj, int tip) { //FALSE - SERIJSKA / TRUE - SEKVENCIJALNA
+    if(fajl == NULL)
+        return;
+
+    fseek(fajl, 0, SEEK_SET);
+    BLOK_SS blok;
+
+    while(fread(&blok, sizeof(BLOK_SS), 1, fajl)) {
+        int i;
+        for(i = 0; i < FAKTOR_BLOKIRANJA; i++) {
+            if(strcmp(blok.slogovi[i].evidBroj, OZNAKA_KRAJA_DATOTEKE) == 0)
+                return NULL;
+            if(tip != 0 && atoi(blok.slogovi[i].evidBroj) > atoi(evidBroj)) //Ako je sekvencijalna datoteka, takodje moramo da proverimo da li je evidencioni broj koji je poslat manji od onog sto trenutno gledamo u datoteci, samim tim ne postoji takav u datoteci
+                return NULL;
+            if(strcmp(blok.slogovi[i].evidBroj, evidBroj) == 0 && !blok.slogovi[i].deleted) {
+                SLOG_SS *slog = (SLOG *) malloc(sizeof(SLOG_SS));
+                memcpy(slog, &blok.slogovi[i], sizeof(SLOG_SS));
+                return slog;
+            }
+        }
+    }
+}
+
+void unesiSerSlog(FILE *fajl, SLOG_SS *slog) {
+    if(fajl == NULL)
+        return;
+
+    SLOG_SS *slogStari = pronadjiSlog(fajl, slog->evidBroj, 0);
+    if(slogStari != NULL) {
+        printf("\nVec postoji ovakav clan!\n");
+        return;
+    }
+
+    BLOK_SS blok;
+    fseek(fajl, -sizeof(BLOK_SS), SEEK_END);
+    fread(&blok, sizeof(BLOK_SS), 1, fajl);
+
+    int i;
+    for(i = 0; i < FAKTOR_BLOKIRANJA; i++) {
+        if(strcmp(blok.slogovi[i].evidBroj, OZNAKA_KRAJA_DATOTEKE) == 0) {
+            memcpy(&blok.slogovi[i], slog, sizeof(SLOG_SS));
+            i++;
+            break;
+        }
+    }
+
+    if(i < FAKTOR_BLOKIRANJA) {
+        strcpy(blok.slogovi[i].evidBroj, OZNAKA_KRAJA_DATOTEKE);
+        fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+        fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+        fflush(fajl);
+    }
+    else {
+        fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+        fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+        BLOK_SS noviBlok;
+        strcpy(noviBlok.slogovi[0].evidBroj, OZNAKA_KRAJA_DATOTEKE);
+        fwrite(&noviBlok, sizeof(BLOK_SS), 1, fajl);
+    }
+
+    if(ferror(fajl))
+        printf("Greska.\n");
+    else
+        printf("\nUSPESAN UPIS\n");
+}
+
+void unesiSekSlog(FILE *fajl, SLOG_SS *slog) {
+    if(fajl == NULL)
+        return;
+
+    SLOG_SS noviSlog;
+    memcpy(&noviSlog, slog, sizeof(SLOG_SS));
+    BLOK_SS blok;
+    fseek(fajl, 0 , SEEK_SET);
+
+    while(fread(&blok, sizeof(BLOK_SS), 1, fajl)) {
+        int i;
+        for(i = 0; i < FAKTOR_BLOKIRANJA; i++) {
+            if(strcmp(blok.slogovi[i].evidBroj, OZNAKA_KRAJA_DATOTEKE) == 0) {
+                memcpy(&blok.slogovi[i], &noviSlog, sizeof(SLOG_SS));
+                if(i != FAKTOR_BLOKIRANJA - 1) {
+                    strcpy(blok.slogovi[i+1].evidBroj, OZNAKA_KRAJA_DATOTEKE);
+                    fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+                    fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+                    printf("\nNovi slog dodat u datoteci.\n");
+                    return;
+                }
+                else {
+                    fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+                    fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+                    BLOK_SS noviBlok;
+
+                    strcpy(noviBlok.slogovi[0].evidBroj, OZNAKA_KRAJA_DATOTEKE);
+                    fwrite(&noviBlok, sizeof(BLOK_SS), 1 , fajl);
+                    printf("\nNovi slog dodat u datoteci.\n");
+                    printf("Dodat novi blok.");
+                    return;
+                }
+            }
+            else if(strcmp(blok.slogovi[i].evidBroj, noviSlog.evidBroj) == 0) {
+                if(!blok.slogovi[i].deleted)
+                    printf("Slog ne postoji.");
+                else {
+                    memcpy(&blok.slogovi[i], &noviSlog, sizeof(SLOG_SS));
+                    fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+                    fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+                    printf("\nNovi slog je evidentiran.\nPrepisan preko logicki izabranog.\n");
+                }
+            }
+            else if(atoi(blok.slogovi[i].evidBroj) > atoi(noviSlog.evidBroj)) {
+                SLOG_SS tmp;
+                memcpy(&tmp, &blok.slogovi[i], sizeof(SLOG_SS));
+                memcpy(&blok.slogovi[i], &noviSlog, sizeof(SLOG_SS));
+                memcpy(&noviSlog, &tmp, sizeof(SLOG_SS));
+
+                if(i == FAKTOR_BLOKIRANJA - 1) {
+                    fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+                    fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+                    fflush(fajl);
+                }
+            }
+        }
+    }
+
+}
+
+void azurirajSlogRasuta(FILE *fajl, char *evidBroj, char *oznakaCelije, int duzinaKazne) {
+    if(fajl == NULL)
+        return;
+
+    fseek(fajl, 0, SEEK_SET);
+    BAKET baketi[BAK];
+    int i, j;
+    for(i = 0; i < BAK; i++) {
+        fread(&baketi[i], sizeof(BAKET), 1, fajl);
+        for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
+            if(strcmp(baketi[i].slogovi[j].evidBroj, OZNAKA_KRAJA_DATOTEKE) == 0)
+                return;
+            if(strcmp(baketi[i].slogovi[j].evidBroj, evidBroj) == 0 && baketi[i].slogovi[j].deleted == 1) {
+                strcpy(baketi[i].slogovi[j].oznakaCelije, oznakaCelije);
+                baketi[i].slogovi[j].duzinaKazne = duzinaKazne;
+                fseek(fajl, -sizeof(BAKET), SEEK_CUR);
+                fwrite(&baketi[i], sizeof(BAKET), 1, fajl);
+                fflush(fajl);
+                printf("\nSlog izmenjen\n");
+                return;
+            }
+        }
+    }
+    printf("\nSlog nije izmenjen.\n");
+}
+
+void azurirajSlogSerijska(FILE *fajl, char *evidBroj, char *oznakaCelije, int duzinaKazne) {
+    if(fajl == NULL)
+        return;
+
+    fseek(fajl, 0, SEEK_SET);
+    BLOK_SS blok;
+
+    while(fread(&blok, sizeof(BLOK_SS), 1, fajl)) {
+        int i;
+        for(i = 0; i < FAKTOR_BLOKIRANJA; i++) {
+            if(strcmp(blok.slogovi[i].evidBroj, OZNAKA_KRAJA_DATOTEKE) == 0)
+                return;
+            if(strcmp(blok.slogovi[i].evidBroj, evidBroj) == 0 && !blok.slogovi[i].deleted) {
+                strcpy(blok.slogovi[i].oznakaCelije, oznakaCelije);
+                blok.slogovi[i].duzinaKazne = duzinaKazne;
+                fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+                fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+                fflush(fajl);
+                printf("Slog izmenjen.\n");
+                return;
+            }
+        }
+    }
+}
+
+void azurirajSlogSekvencijalna(FILE *fajl, char *evidBroj, char *oznakaCelije, int duzinaKazne) {
+    if(fajl == NULL)
+        return;
+
+    fseek(fajl, 0, SEEK_SET);
+    BLOK_SS blok;
+
+    while(fread(&blok, sizeof(BLOK_SS), 1, fajl)) {
+        int i;
+        for(i = 0; i < FAKTOR_BLOKIRANJA; i++) {
+            if(strcmp(blok.slogovi[i].evidBroj, OZNAKA_KRAJA_DATOTEKE) == 0 || atoi(blok.slogovi[i].evidBroj) > atoi(evidBroj))
+                return;
+            if(strcmp(blok.slogovi[i].evidBroj, evidBroj) == 0 && !blok.slogovi[i].deleted) {
+                strcpy(blok.slogovi[i].oznakaCelije, oznakaCelije);
+                blok.slogovi[i].duzinaKazne = duzinaKazne;
+                fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+                fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+                fflush(fajl);
+                printf("Slog izmenjen.\n");
+                return;
+            }
+        }
+    }
+}
+
 
 
 
