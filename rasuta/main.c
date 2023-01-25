@@ -38,7 +38,6 @@ int main() {
 
         switch(unosKorisnik) {
             case 1: {
-
                 if(fajlRasuta != NULL)
                     fclose(fajlRasuta);
                 if(fajlSS != NULL)
