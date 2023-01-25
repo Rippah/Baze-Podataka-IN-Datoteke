@@ -195,7 +195,9 @@ void unesiRasutiSlog(FILE *fajl, SLOG *slog) {
     fseek(fajl, indeks*sizeof(BAKET), SEEK_SET);
     int j;
     for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
-        if(baketi[indeks].slogovi[j].deleted != 0) {
+        if(baketi[indeks].slogovi[j].deleted != 0)
+            indeks = nadjiSlobodanBaket(indeks, fajl);
+        else {
             memcpy(&baketi[indeks].slogovi[j], slog, sizeof(SLOG));
             break;
         }
