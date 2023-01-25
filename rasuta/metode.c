@@ -225,6 +225,8 @@ SLOG *pronadjiSlog(FILE *fajl, char *evidBroj, int tip) { //FALSE - SERIJSKA / T
             }
         }
     }
+
+    return NULL;
 }
 
 void unesiSerSlog(FILE *fajl, SLOG_SS *slog) {
@@ -407,5 +409,61 @@ void azurirajSlogSekvencijalna(FILE *fajl, char *evidBroj, char *oznakaCelije, i
 }
 
 
+void obrisiSlogRasutaLogicki(FILE *fajl, char *evidBroj) {
+    if(fajl == NULL)
+        return;
+    fseek(fajl, 0, SEEK_SET);
+    BAKET baketi[BAK];
+    int i, j, k = 0;
 
+    for(i = 0; i < BAK; i++) {
+        fread(&baketi[i], sizeof(BAKET), 1, fajl);
+        for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
+            if(strcmp(baketi[i].slogovi[j].evidBroj, evidBroj) == 0) {
+                if(baketi[i].slogovi[j].deleted == 1) {
+                    baketi[i].slogovi[j].deleted = 2;
+                    fseek(fajl, -sizeof(BAKET), SEEK_CUR);
+                    fwrite(&baketi[i], sizeof(BAKET), 1, fajl);
+                    fflush(fajl);
+
+                    printf("\nPronadjen slog...\n");
+                    return;
+                }
+                else
+                    k = 1;
+            }
+        }
+    }
+    if(k == 1)
+        printf("\nSlog je vec obrisan...\n");
+    else
+        printf("\nSlog ne postoji...\n");
+}
+
+
+void obrisiSlogSSLogicki(FILE *fajl, char *evidBroj) {
+    if(fajl == NULL)
+        return;
+    fseek(fajl, 0, SEEK_SET);
+    int i;
+    BLOK_SS blok;
+
+    while(fread(&blok, sizeof(BLOK_SS), 1, fajl)) {
+        for(i = 0; i < FAKTOR_BLOKIRANJA; i++) {
+            if(strcmp(blok.slogovi[i].evidBroj, OZNAKA_KRAJA_DATOTEKE) == 0) {
+                printf("\nSlog ne postoji.");
+                return;
+            }
+            if(strcmp(blok.slogovi[i].evidBroj, evidBroj) == 0 && !blok.slogovi[i].deleted) {
+                blok.slogovi[i].deleted = 1;
+                fseek(fajl, -sizeof(BLOK_SS), SEEK_CUR);
+                fwrite(&blok, sizeof(BLOK_SS), 1, fajl);
+                fflush(fajl);
+
+                printf("\nSlog je logicki obrisan.\n");
+                return;
+            }
+        }
+    }
+}
 

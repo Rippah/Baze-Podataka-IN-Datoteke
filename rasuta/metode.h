@@ -18,3 +18,5 @@ SLOG *pronadjiSlog(FILE *fajl, char *evidBroj, int tip);
 void azurirajSlogRasuta(FILE *fajl, char *evidBroj, char *oznakaCelije, int duzinaKazne);
 void azurirajSlogSerijska(FILE *fajl, char *evidBroj, char *oznakaCelije, int duzinaKazne);
 void azurirajSlogSekvencijalna(FILE *fajl, char *evidBroj, char *oznakaCelije, int duzinaKazne);
+void obrisiSlogRasutaLogicki(FILE *fajl, char *evidBroj);
+void obrisiSlogSSLogicki(FILE *fajl, char *evidBroj);

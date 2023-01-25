@@ -173,11 +173,17 @@ int main() {
                 break;
             }
             case 13: {
-
+                char evidBroj[8+1];
+                printf("\nUnesi evidencioni broj za logicko brisanje:\t");
+                scanf("%s", evidBroj);
+                obrisiSlogRasutaLogicki(fajlRasuta, evidBroj);
                 break;
             }
             case 14: {
-
+                char evidBroj[8+1];
+                printf("\nUnesi evidencioni broj za logicko brisanje:\t");
+                scanf("%s", evidBroj);
+                obrisiSlogSSLogicki(fajlSS, evidBroj);
                 break;
             }
             case 0: {
