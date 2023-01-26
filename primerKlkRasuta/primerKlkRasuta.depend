@@ -1,0 +1,15 @@
+# depslib dependency file v1.0
+1674764283 source:c:\users\dzoni\onedrive\desktop\cbp\vezbe\primerklkrasuta\metode.c
+	"metode.h"
+
+1674763949 c:\users\dzoni\onedrive\desktop\cbp\vezbe\primerklkrasuta\metode.h
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	"struktura.h"
+
+1674755231 c:\users\dzoni\onedrive\desktop\cbp\vezbe\primerklkrasuta\struktura.h
+
+1674764007 source:c:\users\dzoni\onedrive\desktop\cbp\vezbe\primerklkrasuta\main.c
+	"metode.h"
+
