@@ -117,11 +117,11 @@ void ispisSS(FILE *fajl) {
 }
 
 int nadjiSlobodanBaket(int adresaPunog, FILE *fajl) {
-    BAKET baketi[BROJ_BAKETA];
+    BAKET baketi[BAK];
     fseek(fajl, 0, SEEK_SET);
     int i;
 
-    for(i = 0; i < BROJ_BAKETA; i++)
+    for(i = 0; i < BAK; i++)
         fread(&baketi[i], sizeof(BAKET), 1, fajl);
 
 
@@ -129,7 +129,7 @@ int nadjiSlobodanBaket(int adresaPunog, FILE *fajl) {
         if(baketi[adresaPunog].slogovi[i].deleted != 1)
             return adresaPunog;
 
-    adresaPunog = nadjiSlobodanBaket((adresaPunog+KORAK)%BROJ_BAKETA, fajl);
+    adresaPunog = nadjiSlobodanBaket((adresaPunog+KORAK)%BAK, fajl);
     return adresaPunog;
 }
 
@@ -183,15 +183,33 @@ void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
 
 }
 
+int postojiSifra(FILE *fajl, int sifra) {
+    fseek(fajl, 0, SEEK_SET);
+    BAKET baketi[BAK];
+    int i, j;
 
+    for(i = 0; i < BAK; i++) {
+        fread(&baketi[i], sizeof(BAKET), 1, fajl);
+        for(j = 0; j < FAKTOR_BAKETIRANJA; j++)
+            if(sifra == baketi[i].slogovi[j].sifraZatvorenika)
+                return -1;
 
-void unesiSlog(FILE *fajl, SLOG *slog) {
+    }
+
+    return 0;
+}
+
+void unesiRasutiSlog(FILE *fajl, SLOG *slog) {
     if(fajl == NULL)
         return;
 
-    int id = slog->sifra%BROJ_BAKETA;
+    int id = atoi(slog->sifraZatvorenika)%BAK;
+    int faktor = postojiSifra(fajl, atoi(slog->sifraZatvorenika));
 
-    BAKET baketi[BROJ_BAKETA];
+    if(faktor == -1)
+        return;
+
+    BAKET baketi[BAK];
     fseek(fajl, id*sizeof(BAKET), SEEK_SET);
     int j;
 
@@ -201,12 +219,11 @@ void unesiSlog(FILE *fajl, SLOG *slog) {
 
     fread(&baketi[id], sizeof(BAKET), 1, fajl);
     for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
-        if(baketi[id].slogovi[j].deleted != 1 && baketi[id].slogovi[j].sifra) {
-            printf("%d", baketi[id].slogovi[j].sifra);
+        if(baketi[id].slogovi[j].deleted != 1) {
             memcpy(&baketi[id].slogovi[j], slog, sizeof(SLOG));
             fseek(fajl, -(FAKTOR_BAKETIRANJA-j)*sizeof(SLOG), SEEK_CUR);
             fwrite(&baketi[id].slogovi[j], sizeof(SLOG), 1, fajl);
-            printf("\nBaket %d\n", id);
+            printf("\nUpisan u baket %d\n", id);
             return;
         }
     }
