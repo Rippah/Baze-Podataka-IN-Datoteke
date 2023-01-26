@@ -116,22 +116,21 @@ void ispisSS(FILE *fajl) {
 
 }
 
-int nadjiSlobodanBaket(int adresaPunog, FILE *fajlRasuta) {
-    int adresaSledeceg = adresaPunog;
-    BAKET baketi[BAK];
-    fseek(fajlRasuta, 0, SEEK_SET);
+int nadjiSlobodanBaket(int adresaPunog, FILE *fajl) {
+    BAKET baketi[BROJ_BAKETA];
+    fseek(fajl, 0, SEEK_SET);
     int i;
 
-    for(i = 0; i < BAK; i++) {
-        fread(&baketi[i], sizeof(BAKET), 1, fajlRasuta);
-    }
+    for(i = 0; i < BROJ_BAKETA; i++)
+        fread(&baketi[i], sizeof(BAKET), 1, fajl);
 
-    adresaSledeceg = (adresaPunog + KORAK)%BAK; //Trazimo da li postoji slobodan slot
 
-    if(baketi[adresaSledeceg].slogovi[FAKTOR_BAKETIRANJA-1].deleted != 0)   //Ako u tom slotu se nalaze podaci, moramo da trazimo dalje
-        adresaSledeceg = nadjiSlobodanBaket(adresaSledeceg, fajlRasuta);
+    for(i = 0; i < FAKTOR_BAKETIRANJA; i++)
+        if(baketi[adresaPunog].slogovi[i].deleted != 1)
+            return adresaPunog;
 
-    return adresaSledeceg;
+    adresaPunog = nadjiSlobodanBaket((adresaPunog+KORAK)%BROJ_BAKETA, fajl);
+    return adresaPunog;
 }
 
 void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
@@ -185,26 +184,35 @@ void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
 }
 
 
-void unesiRasutiSlog(FILE *fajl, SLOG *slog) {
+
+void unesiSlog(FILE *fajl, SLOG *slog) {
     if(fajl == NULL)
         return;
 
-    int indeks = nadjiSlobodanBaket(atoi(slog->evidBroj)%BAK, fajl);
+    int id = slog->sifra%BROJ_BAKETA;
 
-    BAKET baketi[BAK];
-    fseek(fajl, indeks*sizeof(BAKET), SEEK_SET);
+    BAKET baketi[BROJ_BAKETA];
+    fseek(fajl, id*sizeof(BAKET), SEEK_SET);
     int j;
+
+    for(j = 0; j < FAKTOR_BAKETIRANJA; j++)
+        if(baketi[id].slogovi[FAKTOR_BAKETIRANJA - 1].deleted == 1)
+            id = nadjiSlobodanBaket(id, fajl);
+
+    fread(&baketi[id], sizeof(BAKET), 1, fajl);
     for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
-        if(baketi[indeks].slogovi[j].deleted != 0)
-            indeks = nadjiSlobodanBaket(indeks, fajl);
-        else {
-            memcpy(&baketi[indeks].slogovi[j], slog, sizeof(SLOG));
-            break;
+        if(baketi[id].slogovi[j].deleted != 1 && baketi[id].slogovi[j].sifra) {
+            printf("%d", baketi[id].slogovi[j].sifra);
+            memcpy(&baketi[id].slogovi[j], slog, sizeof(SLOG));
+            fseek(fajl, -(FAKTOR_BAKETIRANJA-j)*sizeof(SLOG), SEEK_CUR);
+            fwrite(&baketi[id].slogovi[j], sizeof(SLOG), 1, fajl);
+            printf("\nBaket %d\n", id);
+            return;
         }
     }
-    fseek(fajl, -sizeof(SLOG), SEEK_CUR);
-    fwrite(&baketi[indeks].slogovi[j], sizeof(SLOG), 1, fajl);
+
 }
+
 
 SLOG *pronadjiSlog(FILE *fajl, char *evidBroj, int tip) { //FALSE - SERIJSKA / TRUE - SEKVENCIJALNA
     if(fajl == NULL)
@@ -431,7 +439,7 @@ void obrisiSlogRasutaLogicki(FILE *fajl, char *evidBroj) {
                     printf("\nPronadjen slog...\n");
                     return;
                 }
-                else
+                else if(baketi[i].slogovi[j].deleted == 2)
                     k = 1;
             }
         }
