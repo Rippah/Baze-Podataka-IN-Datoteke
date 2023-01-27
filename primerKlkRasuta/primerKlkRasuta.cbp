@@ -34,6 +34,11 @@
 		<Unit filename="main.c">
 			<Option compilerVar="CC" />
 		</Unit>
+		<Unit filename="metode.c">
+			<Option compilerVar="CC" />
+		</Unit>
+		<Unit filename="metode.h" />
+		<Unit filename="struktura.h" />
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

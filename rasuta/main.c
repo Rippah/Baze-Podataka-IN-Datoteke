@@ -82,7 +82,7 @@ int main() {
             case 7: {
                 SLOG slog;
                 printf("\nEvidencioni Broj:\t");
-                scanf("%s", &slog.evidBroj);
+                scanf("%s", slog.evidBroj);
                 printf("\nDuzina Kazne:\t");
                 scanf("%d", &slog.duzinaKazne);
                 printf("\nDatum Dolaska:\t");

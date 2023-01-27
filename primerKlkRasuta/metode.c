@@ -223,45 +223,46 @@ void konverzija(FILE *fajlRasuta) {
     int i, j, k = 0, l, hit = 0;
 
     BLOK blok;
-    strcpy(blok.slogovi[0].idKlij, "********");
+    strcpy(blok.slogovi[0].idKlij, "********"); //Postavis pocetnu vrednost datoteke
     fseek(fajlRasuta, 0, SEEK_SET);
 
 
     for(i = 0; i < BROJ_BAKETA; i++) {
         fread(&baketi[i], sizeof(BAKET), 1, fajlRasuta);
         for(j = 0; j < FAKTOR_BAKETIRANJA; j++) {
-            if(baketi[i].slogovi[j].deleted == 1 && baketi[i].slogovi[j].sifra != 0) {
-                for(l = 0; l <=k; l++)
-                    if(strcmp(blok.slogovi[l].idKlij, baketi[i].slogovi[j].idKlij) == 0) {
-                        blok.slogovi[l].ukuPren += baketi[i].slogovi[j].kolPren;
-                        hit = 1;
+            if(baketi[i].slogovi[j].deleted == 1 && baketi[i].slogovi[j].sifra != 0) {      //Ako smo nasli vrednost
+                for(l = 0; l <=k; l++)                                                      //Prolazimo kroz ceo blok
+                    if(strcmp(blok.slogovi[l].idKlij, baketi[i].slogovi[j].idKlij) == 0) {  //I ako naidje na isti idKlijenta
+                        blok.slogovi[l].ukuPren += baketi[i].slogovi[j].kolPren;            //Dodaj na ukupnu kolicinu
+                        hit = 1;                                                            //Ako je nasao istog, nema poente da upisujemo opet idKlijenta
                     }
-                if(hit == 0) {
+                if(hit == 0) {                                                              //Tako da ga ovaj hit cuva od toga
                     strcpy(blok.slogovi[k].idKlij, baketi[i].slogovi[j].idKlij);
                     blok.slogovi[k].ukuPren = baketi[i].slogovi[j].kolPren;
                     k++;
                 }
                 hit = 0;
-                if(k >= FAKTOR_BLOKIRANJA) {
+                if(k >= FAKTOR_BLOKIRANJA) {                                                //Ako imamo vise od 4 sloga u bloku, treba napisati novi blok
                     fwrite(&blok, sizeof(BLOK), 1, fajlSerijska);
                     BLOK noviBlok;
                     strcpy(noviBlok.slogovi[0].idKlij, "********");
                     fwrite(&noviBlok, sizeof(BLOK), 1, fajlSerijska);
                     fseek(fajlSerijska, -sizeof(BLOK), SEEK_CUR);
-                    k = 0;
+                    k = 0;                                                                  //Brojac nazad na nulu da bi opet to uradili
                 }
             }
         }
     }
 
-    if(k != 0) {
-        strcpy(blok.slogovi[k].idKlij, "********");
+    if(k != 0) {                                                                           //Ako je brojac ostao u opsegu od 1 do FAKTOR_BLOKIRANJA - 1
+        strcpy(blok.slogovi[k].idKlij, "********");                                        //Upisujemo ostatak u datoteku
         fseek(fajlSerijska, -sizeof(BLOK), SEEK_CUR);
         fwrite(&blok, sizeof(BLOK), 1, fajlSerijska);
 
     }
 
     fclose(fajlSerijska);
+    printf("\n\n\tID Klijenta \t Ukupna Kolicina Transakcija");
     fajlSerijska = fopen("izvestaj.bin", "rb+");
     ispisSvihSlogovaSerijska(fajlSerijska);
     fclose(fajlSerijska);
