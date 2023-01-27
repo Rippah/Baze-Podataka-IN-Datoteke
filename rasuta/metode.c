@@ -183,7 +183,7 @@ void konverzija(FILE *fajlSS, FILE *fajlRasuta) {
 
 }
 
-int postojiSifra(FILE *fajl, int sifra) {
+int postojiSifra(FILE *fajl, char *broj) {
     fseek(fajl, 0, SEEK_SET);
     BAKET baketi[BAK];
     int i, j;
@@ -191,7 +191,7 @@ int postojiSifra(FILE *fajl, int sifra) {
     for(i = 0; i < BAK; i++) {
         fread(&baketi[i], sizeof(BAKET), 1, fajl);
         for(j = 0; j < FAKTOR_BAKETIRANJA; j++)
-            if(sifra == baketi[i].slogovi[j].sifraZatvorenika)
+            if(strcmp(broj, baketi[i].slogovi[j].evidBroj) == 0)
                 return -1;
 
     }
@@ -203,8 +203,8 @@ void unesiRasutiSlog(FILE *fajl, SLOG *slog) {
     if(fajl == NULL)
         return;
 
-    int id = atoi(slog->sifraZatvorenika)%BAK;
-    int faktor = postojiSifra(fajl, atoi(slog->sifraZatvorenika));
+    int id = atoi(slog->evidBroj)%BAK;
+    int faktor = postojiSifra(fajl, slog->evidBroj);
 
     if(faktor == -1)
         return;
